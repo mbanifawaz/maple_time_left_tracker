@@ -9,6 +9,22 @@
 <body>
     <div class="notification" id="notification"></div>
     
+    <!-- Confirmation Modal -->
+    <div class="modal-overlay" id="confirmModal">
+        <div class="modal-dialog">
+            <div class="modal-header">
+                <h3 id="confirmTitle">Confirm Action</h3>
+            </div>
+            <div class="modal-body">
+                <p id="confirmMessage">Are you sure you want to proceed?</p>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-secondary" onclick="closeConfirmModal()">Cancel</button>
+                <button class="btn-danger" id="confirmButton" onclick="confirmAction()">Confirm</button>
+            </div>
+        </div>
+    </div>
+    
     <button class="theme-toggle" id="themeToggle" onclick="toggleTheme()">
         <span id="themeIcon">🌙</span>
     </button>
@@ -16,16 +32,25 @@
     <div class="container">
         <div class="header">
             <h1>Time Tracker</h1>
-            <p class="subtitle">Track your work hours efficiently</p>
+            <p class="subtitle">Munes Bani Fawaz Maple-Telecommunications Work Time Tracker</p>
         </div>
 
         <div class="card">
             <div class="input-group">
                 <label>Work Settings</label>
-                <div class="input-row">
-                    <input type="time" id="startTimeInput" placeholder="Start Time">
-                    <input type="number" id="regularHours" placeholder="Sun-Thu Hours" value="3" min="1" max="24" step="0.5">
-                    <input type="number" id="weekendHours" placeholder="Fri-Sat Hours" value="8" min="1" max="24" step="0.5">
+                <div class="work-settings-grid">
+                    <div class="input-field">
+                        <label class="input-label">Start Time</label>
+                        <input type="time" id="startTimeInput" placeholder="Start Time">
+                    </div>
+                    <div class="input-field">
+                        <label class="input-label">Regular Hours (Sun-Thu)</label>
+                        <input type="number" id="regularHours" placeholder="Hours" min="1" max="24" step="0.5">
+                    </div>
+                    <div class="input-field">
+                        <label class="input-label">Weekend Hours (Fri-Sat)</label>
+                        <input type="number" id="weekendHours" placeholder="Hours" min="1" max="24" step="0.5">
+                    </div>
                 </div>
             </div>
 
@@ -37,7 +62,7 @@
             <div class="input-group" style="margin-top: 20px;">
                 <label>Extra Time Adjustment</label>
                 <div class="input-row">
-                    <input type="number" id="extraHours" placeholder="Hours" min="-24" max="24" step="0.5" value="0">
+                    <input type="number" id="extraHours" placeholder="Hours" min="-24" max="24" step="0.5">
                     <button class="btn-secondary" onclick="applyExtraTime()">Apply Extra Time</button>
                     <small style="color: var(--text-secondary); align-self: center;">Use negative values to add more work time</small>
                 </div>

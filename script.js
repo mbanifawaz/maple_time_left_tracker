@@ -1,10 +1,10 @@
 // State management
 let state = {
     startTime: null,
-    regularHours: 3,
-    weekendHours: 8,
+    regularHours: null,
+    weekendHours: null,
     hasNotified: false,
-    extraTime: 0
+    extraTime: null
 };
 
 // Load state from localStorage
@@ -22,10 +22,20 @@ function loadState() {
             const hours = state.startTime.getHours().toString().padStart(2, '0');
             const minutes = state.startTime.getMinutes().toString().padStart(2, '0');
             document.getElementById('startTimeInput').value = `${hours}:${minutes}`;
+            
+            // Disable controls if work has started
+            disableWorkControls(true);
         }
-        document.getElementById('regularHours').value = state.regularHours;
-        document.getElementById('weekendHours').value = state.weekendHours || state.saturdayHours || 8;
-        if (state.extraTime !== 0) {
+        
+        // Only set hours if they exist in state
+        if (state.regularHours !== null) {
+            document.getElementById('regularHours').value = state.regularHours;
+        }
+        if (state.weekendHours !== null) {
+            document.getElementById('weekendHours').value = state.weekendHours;
+        }
+        
+        if (state.extraTime !== null && state.extraTime !== 0) {
             document.getElementById('extraHours').value = state.extraTime;
         }
     }
@@ -48,7 +58,11 @@ function checkNewDay() {
         // Reset for new day
         state.startTime = null;
         state.hasNotified = false;
-        state.extraTime = 0;
+        state.extraTime = null;
+        
+        // Re-enable controls for new day
+        disableWorkControls(false);
+        
         saveState();
     }
     
@@ -58,13 +72,21 @@ function checkNewDay() {
 // Start work
 function startWork() {
     const startTimeInput = document.getElementById('startTimeInput').value;
-    const regularHours = parseFloat(document.getElementById('regularHours').value) || 3;
-    const weekendHours = parseFloat(document.getElementById('weekendHours').value) || 8;
+    const regularHoursInput = document.getElementById('regularHours').value;
+    const weekendHoursInput = document.getElementById('weekendHours').value;
     
     if (!startTimeInput) {
         showNotification('Please enter a start time', 'error');
         return;
     }
+    
+    if (!regularHoursInput || !weekendHoursInput) {
+        showNotification('Please enter work hours for both regular and weekend days', 'error');
+        return;
+    }
+    
+    const regularHours = parseFloat(regularHoursInput);
+    const weekendHours = parseFloat(weekendHoursInput);
     
     const [hours, minutes] = startTimeInput.split(':').map(Number);
     state.startTime = new Date();
@@ -72,24 +94,74 @@ function startWork() {
     state.regularHours = regularHours;
     state.weekendHours = weekendHours;
     state.hasNotified = false;
-    state.extraTime = 0;
-    document.getElementById('extraHours').value = 0;
+    state.extraTime = null;
+    document.getElementById('extraHours').value = '';
+    
+    // Disable inputs and start button
+    disableWorkControls(true);
     
     saveState();
     showNotification('Work day started!', 'success');
 }
 
+// Function to enable/disable work controls
+function disableWorkControls(disabled) {
+    document.getElementById('startTimeInput').disabled = disabled;
+    document.getElementById('regularHours').disabled = disabled;
+    document.getElementById('weekendHours').disabled = disabled;
+    
+    const startBtn = document.querySelector('.btn-primary');
+    if (startBtn && (startBtn.textContent.includes('Start Work') || startBtn.textContent.includes('Timer Running'))) {
+        startBtn.disabled = disabled;
+        if (disabled) {
+            startBtn.innerHTML = '⏱️ Timer Running';
+        } else {
+            startBtn.innerHTML = 'Start Work';
+        }
+    }
+}
+
 // Reset day
 function resetDay() {
-    if (confirm('Are you sure you want to reset today\'s data?')) {
-        state.startTime = null;
-        state.hasNotified = false;
-        state.extraTime = 0;
-        document.getElementById('startTimeInput').value = '';
-        document.getElementById('extraHours').value = 0;
-        saveState();
-        showNotification('Day reset', 'info');
+    showConfirmModal(
+        'Reset Work Day',
+        'Are you sure you want to reset today\'s work data? This will clear your start time and all progress.',
+        () => {
+            state.startTime = null;
+            state.hasNotified = false;
+            state.extraTime = null;
+            document.getElementById('startTimeInput').value = '';
+            document.getElementById('extraHours').value = '';
+            
+            // Re-enable work controls
+            disableWorkControls(false);
+            
+            saveState();
+            showNotification('Day reset', 'info');
+        }
+    );
+}
+
+// Show confirmation modal
+let confirmCallback = null;
+
+function showConfirmModal(title, message, onConfirm) {
+    document.getElementById('confirmTitle').textContent = title;
+    document.getElementById('confirmMessage').textContent = message;
+    document.getElementById('confirmModal').classList.add('show');
+    confirmCallback = onConfirm;
+}
+
+function closeConfirmModal() {
+    document.getElementById('confirmModal').classList.remove('show');
+    confirmCallback = null;
+}
+
+function confirmAction() {
+    if (confirmCallback) {
+        confirmCallback();
     }
+    closeConfirmModal();
 }
 
 // Apply extra time
@@ -178,11 +250,12 @@ function updateDisplay() {
     const requiredMs = requiredHours * 60 * 60 * 1000;
     
     // Calculate leave time (with extra time adjustment)
-    const adjustedRequiredMs = requiredMs - (state.extraTime * 60 * 60 * 1000);
+    const extraTimeMs = (state.extraTime || 0) * 60 * 60 * 1000;
+    const adjustedRequiredMs = requiredMs - extraTimeMs;
     const leaveTime = new Date(state.startTime.getTime() + adjustedRequiredMs);
     
     // Calculate actual worked time (including extra time)
-    let workedMs = now - state.startTime + (state.extraTime * 60 * 60 * 1000);
+    let workedMs = now - state.startTime + extraTimeMs;
     if (workedMs < 0) workedMs = 0;
     
     // Calculate time left
@@ -202,7 +275,7 @@ function updateDisplay() {
         const minutesLeft = Math.floor((timeLeftMs % (1000 * 60 * 60)) / (1000 * 60));
         const secondsLeft = Math.floor((timeLeftMs % (1000 * 60)) / 1000);
         
-        let extraTimeDisplay = state.extraTime !== 0 ? ` (${state.extraTime > 0 ? '+' : ''}${state.extraTime}h)` : '';
+        let extraTimeDisplay = (state.extraTime !== null && state.extraTime !== 0) ? ` (${state.extraTime > 0 ? '+' : ''}${state.extraTime}h)` : '';
         timeLeftDiv.textContent = `${hoursLeft}h ${minutesLeft}m ${secondsLeft}s remaining${extraTimeDisplay}`;
         document.title = `${hoursLeft}h ${minutesLeft}m ${secondsLeft}s - Time Tracker`;
         
@@ -441,6 +514,21 @@ function init() {
     
     // Check for new day every hour
     setInterval(checkNewDay, 3600000);
+    
+    // Add keyboard listeners
+    document.addEventListener('keydown', (e) => {
+        // Close modal on Escape
+        if (e.key === 'Escape' && document.getElementById('confirmModal').classList.contains('show')) {
+            closeConfirmModal();
+        }
+    });
+    
+    // Close modal when clicking outside
+    document.getElementById('confirmModal').addEventListener('click', (e) => {
+        if (e.target === e.currentTarget) {
+            closeConfirmModal();
+        }
+    });
 }
 
 // Start the app
