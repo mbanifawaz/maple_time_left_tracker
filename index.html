@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Time Tracker</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="notification" id="notification"></div>
+    
+    <button class="theme-toggle" id="themeToggle" onclick="toggleTheme()">
+        <span id="themeIcon">🌙</span>
+    </button>
+
+    <div class="container">
+        <div class="header">
+            <h1>Time Tracker</h1>
+            <p class="subtitle">Track your work hours efficiently</p>
+        </div>
+
+        <div class="card">
+            <div class="input-group">
+                <label>Work Settings</label>
+                <div class="input-row">
+                    <input type="time" id="startTimeInput" placeholder="Start Time">
+                    <input type="number" id="regularHours" placeholder="Sun-Thu Hours" value="3" min="1" max="24" step="0.5">
+                    <input type="number" id="weekendHours" placeholder="Fri-Sat Hours" value="8" min="1" max="24" step="0.5">
+                </div>
+            </div>
+
+            <div class="button-group">
+                <button class="btn-primary" onclick="startWork()">Start Work</button>
+                <button class="btn-danger" onclick="resetDay()">Reset Day</button>
+            </div>
+
+            <div class="input-group" style="margin-top: 20px;">
+                <label>Extra Time Adjustment</label>
+                <div class="input-row">
+                    <input type="number" id="extraHours" placeholder="Hours" min="-24" max="24" step="0.5" value="0">
+                    <button class="btn-secondary" onclick="applyExtraTime()">Apply Extra Time</button>
+                    <small style="color: var(--text-secondary); align-self: center;">Use negative values to add more work time</small>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="status-display">
+                <div class="current-time" id="currentTime">00:00:00</div>
+                <div class="progress-container">
+                    <div class="progress-bar" id="progressBar">
+                        <span id="progressText">0%</span>
+                    </div>
+                </div>
+                <div class="time-left" id="timeLeft">Ready to start</div>
+                <div class="leave-time" id="leaveTime"></div>
+            </div>
+
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-value" id="workedToday">0h</div>
+                    <div class="stat-label">Worked Today</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="productivity">0%</div>
+                    <div class="stat-label">Progress</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="startTimeDisplay">--:--</div>
+                    <div class="stat-label">Start Time</div>
+                </div>
+                <div class="stat-card" id="overtimeCard" style="display: none;">
+                    <div class="stat-value" id="overtimeDisplay">0h 0m 0s</div>
+                    <div class="stat-label">Overtime</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Audio element for notification sound -->
+    <audio id="notificationSound" preload="auto"></audio>
+    
+    <script src="script.js"></script>
+</body>
+</html>
